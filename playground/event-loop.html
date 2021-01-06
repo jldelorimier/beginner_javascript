@@ -1,0 +1,97 @@
+<!-- At time 4m - 4m30s, when he runs his function on latentflip.com/loupe, why don't BOTH the setTimeout function and the setInterval boop function go into the Web APIs? Shouldn't the boop function also be in Web APIs for at least a short period of time before the 100ms has completed? It doesn't look like it goes into Web APIs at all. It doesn't go into the Callback Queue either. Why doesn't it have to go into the Callback Queue? How do interval functions work? They don't have to go into the Callback queue? they're just continuously thrown onto  the call stack whenever they're interval occurs? what if two things (lines of code) need to happen in the same millisecond? Can't the callstack only run one of them at once? -->
+<!-- Earlier in lesson: -->
+<!-- <script> With this code inside these script tags, things will print in the console in this order: Starting, Ending, Running. Running logs last even though the setTimeout is 0 seconds because we still put the running(){} function in the web API and then it immediately goes into the callback queue. The 'Ending' console.log runs next, and then only when that line is finished does it say "oh, I have a moment to put something else on the call stack, and then it checks the Callback Queue and pulls the console.log('Running') and runs it."
+  console.log('Starting');
+  setTimeout(function running() {
+    console.log('Running');
+  }, 0);
+  console.log('Ending');
+</script> -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Event Loop</title>
+  <link rel="stylesheet" href="../base.css">
+</head>
+
+<body>
+  <style>
+    .go {
+      margin: 5rem;
+      background: white;
+      padding: 5rem;
+      width: 25rem;
+      height: 25rem;
+      transition: all 0.2s;
+    }
+    .go.circle {
+      border-radius: 50%;
+    }
+    .red { /* He did .go.red. Does it matter? Why should I make it .go.red? */
+      background: tomato;
+    }
+    .purple { /* He did .go.purple. Does it matter? */
+      background: purple;
+      color: white; /* This changes font color to white when background is purple. Why isn't this property called font-color? W3Schools just says the "color" property changes the text-color. I guess there's not a different property for font/text-color. */
+    }
+    .fadeout { /* He did .go.fadeout. */
+      opacity: 0;
+    }
+  </style>
+  <div class="go">Click me</div>
+  <script>
+    // console.log('Starting');
+    // setTimeout(function() { // The _function_ here is a "callback." It queues up the callback function to run 2 seconds (2000 milliseconds) later.
+    //   console.log('Running');
+    // }, 2000)
+    // console.log('Ending');
+
+    const go = document.querySelector('.go');
+
+// This simple little animation we've written below is "Callback Hell." "Callback Hell is, if you need to do one thing after another, you must nest the callbacks inside of each other, because they all depend on the previous callback to being called before they can go ahead and run. What we've written is also called 'Christmas Tree code' with how the side indent looks... The solution to Callback Hell is "The Promise Land." Promises are sort of an IOU for something that will happen in the future, and promises allow us to write code that is much easier to look at - it's much flatter (¿i.e. I think he means the indentation aka the opposite of 'christmas tree code'?) and that's what we're going to look at in the next video."
+
+  //1. change the text to GO when clicked.
+    go.addEventListener('click', function(e) {
+      const el = e.currentTarget; // .currentTarget is a an event property (¿i.e. like a method that can be run on an event?) that returns the object whose event listener triggered the event. In this case, this line assigns the div with class="go" to the variable "el" when that div is clicked on.
+      console.log(el);
+      el.textContent = 'GO!'
+      console.log(el.classList);
+      //2. make it a circle after 2 seconds
+      setTimeout(() => {
+        el.classList.add('circle');
+        console.log(el.classList);
+        //3. make it red afte3r 0.5s
+        setTimeout(() => { // This setTimeout() has to go INSIDE of the 'circle' setTimeout(); otherwise the 'red' class will be added before the 'circle' class because the 'circle' timeout finishes first (0.5s instead of 2 s).
+          el.classList.add('red'); 
+          console.log(el.classList);
+          //4. make it sqaure after 0.25s
+          setTimeout(() => {
+            el.classList.remove('circle');
+            console.log(el.classList);
+            //5. make it purple after 0.3s
+            setTimeout(() => {
+              el.classList.remove('red'); // I didn't include this line originally but Wes did. I guess this is good to keep our current classList clean.
+              console.log(el.classList);
+              el.classList.add('purple');
+              console.log(el.classList);
+              //6. fade out after 0.5s
+              setTimeout(() => {
+                el.classList.add('fadeout');
+                console.log(el.classList);
+              }, 500);
+            }, 300);
+          }, 250);
+        }, 500);
+      }, 2000);
+      console.log(el.classList);
+    });
+  //7. finish!
+
+  </script>
+</body>
+
+</html>
