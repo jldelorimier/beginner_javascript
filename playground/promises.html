@@ -10,6 +10,102 @@
 
 <body>
   <script>
+    // Promise Summary: We have a regular function that makes a promise (defines a variable that is a promise) that immediately returns a promise. Note that sometimes people will skip defining a variable that is the promise and instead simply return the promise itself (i.e. on line 15  return new Promise(funciton(resolve, reject) {}); instead of const pizzaPromise = new Promise(function(resolve, reject) {}; return pizzaPromise). The logic to how the promise gets resolved is always inside of the promise body. And that function will either resolve or reject whenever it feels like it's ready (in our case, we feel like the pizza is ready after 1 second). Then what you need to do is to do ahead and run that function and that will return the promise of pizza, and then, in order to get the pizza, the way you access the resolved value is by chaining a .then onto it. 
+    function makePizza(toppings = []) { // << ¿What is this syntax where you can set a default value of an argument inside the parameters of the function itself?
+      return new Promise(function(resolve, reject) { // ¿What does the new Promise do? Why is it a capital P? What's the signficance of the capital letter? The pizzaPromise here is like your pizza order number when you order a pizza. You can't eat the order number, but you know this means you're going to get a pizza. A promise takes in a callback function, and that function has two arguments: the resolve function, and the reject function.
+        const amountOfTimeToBake = 500+200*toppings.length; // he put this line inside of the return callback function... I initially put it above the return line... why does it need to be inside the Promise callback function?
+      // wait one second for the pizza to cook:
+      setTimeout(function() {
+        resolve(`Here is your pizza with the following toppings: ${toppings.join(', ')}.`); // the resolve goes inside of the timeout
+      }, amountOfTimeToBake);
+      //when you are ready, you can resolve this promise
+      // if something went wrong, we can reject this promise
+      }); 
+      // "You return that pizza promise from your function immediately... Promises are made immediately, but they do not resolve until they're ready: until the data comes back, until the timer is finished, etc." IMPORTANT: Return happens immediately, but resolving happens later when it's done. 
+    }
+
+    const pizza = makePizza(['cheese']); // When we call the makePizza() function, it does not give us the pizza, it gives us the Promise of a pizza. 
+    // const pepperoniPromise = makePizza(['pepperoni']); 
+    // const canadianPromise = makePizza(['canadian bacon', 'pineapple']); 
+    // console.log(pizza); 
+    // console.log(canadianPromise); 
+    // console.log(pepperoniPromise); 
+    // ^ These all will return PROMISE objects but not the value inside those promise objects (even if the promise is resolved and has a value). To access the value, you then have to run .then on the promise, and you give the .then a callback function, and that callback function will pass you the pizza, or the value of the promise object, and then you can manipulate that value or call it inside of the function itself:
+    
+    // console.log(pepperoniPromise);
+    // console.log('Starting')
+    // pepperoniPromise.then(function(pizza) {
+    //   console.log('Ah got it!')
+    //   console.log(`Here is your pizza with the toppings: ${pizza}`)
+    // });
+    // console.log('Ending')
+    // ^This will log Starting THEN Ending THEN the value of the promise. "We could use a sync await to actually do that sequentially if we like to" (¿I think he means logging Starting THEN the value of the promise THEN Ending)
+
+    //BELOW: PIZZAS MADE SEQUENTIALLY. Makes sense if you have a tiny brick oven and can only make one pizza at a time.
+    // console.log('first')
+    // makePizza(['pepperoni'])
+    // .then(function(pizza) {
+    //   console.log(pizza);
+    //   return makePizza(['ham', 'pineapple']); // if the ones below don't have semi-colons, why does this one?
+    // }) // these intentionally don't have semi-colons bc they're chained; we just put the new .then's on on their own lines for readability.
+    // .then(function(pizza) {
+    //   console.log(pizza);
+    //   return makePizza(['fresh mozzerella', 'basil', 'olives', 'fresh tomatoes']);
+    // })
+    // .then(function(pizza) {
+    //   console.log(pizza);
+    //   return makePizza(); // I'm kind of confused why you have to start calling the next function you want to daisy chain in the return of the last .then for the promise. But I guess it's because you only want that function to start running as a result of the prior one completing and the prior promise returning a result.
+    // })
+    // .then(function(pizza) {
+    //   console.log(pizza);
+    //   return makePizza(['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'])
+    // })
+    // .then(pizza => {
+    //   console.log('here comes the last pizza!');
+    //   console.log(pizza);
+    // });
+    // console.log('right after')
+    // ^ These are run sequentially, NOT concurrently.
+    // ^ Unlike Callback Hell, the Promise Land allows us to keep everything one level deep. Downside of this set up currently is that "first" is still directly followed by "right after" instead of making and delivering the pizzas first. We can use async await to get around that. But if we look at the call stack with the way this is set up ^, we'll run line 43 ('first'), then we'll run the makePizza function on line 44 which immediately returns a promise, and then it runs line 56 ('right after'), and then it goes back to the .then on 45 to pick up once the promise has been resolved, and then it goes down the .then promise daisy chain.
+
+    //BELOW: PIZZAS MADE CONCURRENTLY: Makes sense if you have a huge brick oven and can make 10 pizzas at once. Our goal is to only return the pizzas once they're all ready; not staggered when each of them finish. To do so, we can make a mega Promise and call it a "dinner" promise.
+    const pizzaPromise1 = makePizza(['fresh mozzerella', 'basil', 'olives', 'fresh tomatoes']);
+    const pizzaPromise2 = makePizza(['ham', 'pineapple']);
+    const pizzaPromise3 = makePizza(['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']);
+
+      // Below will return the pizzas all staggered once they're ready rather than one big delivery when all of them are complete.
+    // pizzaPromise1.then(pizzaPromise1 => {
+    //   console.log(pizza);
+    // })
+    // pizzaPromise2.then(pizzaPromise2 => {
+    //   console.log(pizza);
+    // })
+    // pizzaPromise3.then(pizzaPromise3 => {
+    //   console.log(pizza);
+    // })
+
+      // Below will correctly return one array of pizzas once all of the pizzas are done being made.
+    const dinnerPromise = Promise.all([pizzaPromise1, pizzaPromise2, pizzaPromise3]); // "What do you call these types of objects that live on the ¿mama? directly? That's right, static methods. Promise.all() is a static method, sort of like a little helper, and it takes an array of promises, baby promises, and that makes one big promise."
+
+      // Below will return one mega promise of pizzas destructured from an array into distinct variables by destructuring it in the body of the function.
+      dinnerPromise.then(function(pizzas) {
+        // console.log(pizzas);
+        const [mozzerella, hawaiian, garbagePail] = pizzas; // << This is an array destructuring. This allows you to come out of this master promise with three variables rather than just an array.
+        console.log(mozzerella, hawaiian, garbagePail)
+      })
+      
+      // Below will return one mega promise of pizzas destructured from an array into distinct variables by destructuring it directly in the argument of the function.
+    dinnerPromise.then(function([mozzerella, hawaiian, garbagePail]) { // This destructuring pattern says take the first argument and destructure the first item into 'mozzerella', the second item into 'hawaiian', and the third item into 'garbagePail'.
+      console.log(mozzerella, hawaiian, garbagePail)
+    })
+
+    //Instead of Promise.all you can also use Promise.race to return a value once the _first_ thing in the array is finished:
+    const firstPizzaPromise = Promise.race([pizzaPromise1, pizzaPromise2, pizzaPromise3]);
+
+    firstPizzaPromise.then(pizza => {
+      console.log('You must be hungry, here is the first one ready')
+      console.log(pizza);
+    });
 
   </script>
 </body>
