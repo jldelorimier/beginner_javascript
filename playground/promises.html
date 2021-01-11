@@ -1,3 +1,9 @@
+<!-- Take Aways:
+• Promises almost need a .then and a .catch after them. .then does something with the value of the promise (the result if it resolves), and .catch throws a corresponding message if there's an error so the user can see what went wrong.
+• Note if one of the promises in a promise daisy chain errors out, it will then bail out of the rest of the entire promise chain. That's good if you have 7-8 steps that are all dependent upon each other, but if you want the other promises to continue even if one of them is rejected then you should not use a promise daisy chain. You should explore using Promise.all or Promise.race or another promise static method.
+• One way you can solve this ^ is by using Promise.allSettled. The difference between Promise.all and Promise.allSettled is that, Promise.all assumes all of the promises will go successfully, and if you want to catch any errors that happen in the Promise.all, you need to then catch them with a .catch; which still make not be what you want, because if one of them breaks, then the other subsequent promises will not even be attempted. Promise.allSettled will tell you when all of the promises are done, regardless of whether they were rejected or resolved.
+ -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,6 +19,10 @@
     // Promise Summary: We have a regular function that makes a promise (defines a variable that is a promise) that immediately returns a promise. Note that sometimes people will skip defining a variable that is the promise and instead simply return the promise itself (i.e. on line 15  return new Promise(funciton(resolve, reject) {}); instead of const pizzaPromise = new Promise(function(resolve, reject) {}; return pizzaPromise). The logic to how the promise gets resolved is always inside of the promise body. And that function will either resolve or reject whenever it feels like it's ready (in our case, we feel like the pizza is ready after 1 second). Then what you need to do is to do ahead and run that function and that will return the promise of pizza, and then, in order to get the pizza, the way you access the resolved value is by chaining a .then onto it. 
     function makePizza(toppings = []) { // << ¿What is this syntax where you can set a default value of an argument inside the parameters of the function itself?
       return new Promise(function(resolve, reject) { // ¿What does the new Promise do? Why is it a capital P? What's the signficance of the capital letter? The pizzaPromise here is like your pizza order number when you order a pizza. You can't eat the order number, but you know this means you're going to get a pizza. A promise takes in a callback function, and that function has two arguments: the resolve function, and the reject function.
+        // reject if people try with anchovies:
+        if (toppings.includes('anchovies')) {
+          reject(`Seriously? Get out anchovies.`);
+        }
         const amountOfTimeToBake = 500+200*toppings.length; // he put this line inside of the return callback function... I initially put it above the return line... why does it need to be inside the Promise callback function?
       // wait one second for the pizza to cook:
       setTimeout(function() {
@@ -54,58 +64,93 @@
     // })
     // .then(function(pizza) {
     //   console.log(pizza);
-    //   return makePizza(); // I'm kind of confused why you have to start calling the next function you want to daisy chain in the return of the last .then for the promise. But I guess it's because you only want that function to start running as a result of the prior one completing and the prior promise returning a result.
+    //   return makePizza(['just cheese']); // I'm kind of confused why you have to start calling the next function you want to daisy chain in the return of the last .then for the promise. But I guess it's because you only want that function to start running as a result of the prior one completing and the prior promise returning a result.
     // })
     // .then(function(pizza) {
     //   console.log(pizza);
-    //   return makePizza(['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'])
+    //   return makePizza(['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'anchovies'])
     // })
     // .then(pizza => {
     //   console.log('here comes the last pizza!');
     //   console.log(pizza);
-    // });
+    // })
+    // .catch(handleError);
     // console.log('right after')
     // ^ These are run sequentially, NOT concurrently.
     // ^ Unlike Callback Hell, the Promise Land allows us to keep everything one level deep. Downside of this set up currently is that "first" is still directly followed by "right after" instead of making and delivering the pizzas first. We can use async await to get around that. But if we look at the call stack with the way this is set up ^, we'll run line 43 ('first'), then we'll run the makePizza function on line 44 which immediately returns a promise, and then it runs line 56 ('right after'), and then it goes back to the .then on 45 to pick up once the promise has been resolved, and then it goes down the .then promise daisy chain.
 
-    //BELOW: PIZZAS MADE CONCURRENTLY: Makes sense if you have a huge brick oven and can make 10 pizzas at once. Our goal is to only return the pizzas once they're all ready; not staggered when each of them finish. To do so, we can make a mega Promise and call it a "dinner" promise.
-    const pizzaPromise1 = makePizza(['fresh mozzerella', 'basil', 'olives', 'fresh tomatoes']);
-    const pizzaPromise2 = makePizza(['ham', 'pineapple']);
-    const pizzaPromise3 = makePizza(['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']);
+    // //BELOW: PIZZAS MADE CONCURRENTLY: Makes sense if you have a huge brick oven and can make 10 pizzas at once. Our goal is to only return the pizzas once they're all ready; not staggered when each of them finish. To do so, we can make a mega Promise and call it a "dinner" promise.
+    // const pizzaPromise1 = makePizza(['fresh mozzerella', 'basil', 'olives', 'fresh tomatoes']);
+    // const pizzaPromise2 = makePizza(['ham', 'pineapple']);
+    // const pizzaPromise3 = makePizza(['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']);
 
-      // Below will return the pizzas all staggered once they're ready rather than one big delivery when all of them are complete.
-    // pizzaPromise1.then(pizzaPromise1 => {
-    //   console.log(pizza);
-    // })
-    // pizzaPromise2.then(pizzaPromise2 => {
-    //   console.log(pizza);
-    // })
-    // pizzaPromise3.then(pizzaPromise3 => {
-    //   console.log(pizza);
-    // })
+    // // Below will return the pizzas all staggered once they're ready rather than one big delivery when all of them are complete.
+    // // pizzaPromise1.then(pizzaPromise1 => {
+    // //   console.log(pizza);
+    // // })
+    // // pizzaPromise2.then(pizzaPromise2 => {
+    // //   console.log(pizza);
+    // // })
+    // // pizzaPromise3.then(pizzaPromise3 => {
+    // //   console.log(pizza);
+    // // })
 
-      // Below will correctly return one array of pizzas once all of the pizzas are done being made.
-    const dinnerPromise = Promise.all([pizzaPromise1, pizzaPromise2, pizzaPromise3]); // "What do you call these types of objects that live on the ¿mama? directly? That's right, static methods. Promise.all() is a static method, sort of like a little helper, and it takes an array of promises, baby promises, and that makes one big promise."
+    // // Below will correctly return one array of pizzas once all of the pizzas are done being made.
+    // const dinnerPromise = Promise.all([pizzaPromise1, pizzaPromise2, pizzaPromise3]); // "What do you call these types of objects that live on the ¿mama? directly? That's right, static methods. Promise.all() is a static method, sort of like a little helper, and it takes an array of promises, baby promises, and that makes one big promise."
 
-      // Below will return one mega promise of pizzas destructured from an array into distinct variables by destructuring it in the body of the function.
-      dinnerPromise.then(function(pizzas) {
-        // console.log(pizzas);
-        const [mozzerella, hawaiian, garbagePail] = pizzas; // << This is an array destructuring. This allows you to come out of this master promise with three variables rather than just an array.
-        console.log(mozzerella, hawaiian, garbagePail)
-      })
+    //   // Below will return one mega promise of pizzas destructured from an array into distinct variables by destructuring it in the body of the function.
+    //   dinnerPromise.then(function(pizzas) {
+    //     // console.log(pizzas);
+    //     const [mozzerella, hawaiian, garbagePail] = pizzas; // << This is an array destructuring. This allows you to come out of this master promise with three variables rather than just an array.
+    //     console.log(mozzerella, hawaiian, garbagePail)
+    //   })
       
-      // Below will return one mega promise of pizzas destructured from an array into distinct variables by destructuring it directly in the argument of the function.
-    dinnerPromise.then(function([mozzerella, hawaiian, garbagePail]) { // This destructuring pattern says take the first argument and destructure the first item into 'mozzerella', the second item into 'hawaiian', and the third item into 'garbagePail'.
-      console.log(mozzerella, hawaiian, garbagePail)
-    })
+    //   // Below will return one mega promise of pizzas destructured from an array into distinct variables by destructuring it directly in the argument of the function.
+    // dinnerPromise.then(function([mozzerella, hawaiian, garbagePail]) { // This destructuring pattern says take the first argument and destructure the first item into 'mozzerella', the second item into 'hawaiian', and the third item into 'garbagePail'.
+    //   console.log(mozzerella, hawaiian, garbagePail)
+    // })
 
-    //Instead of Promise.all you can also use Promise.race to return a value once the _first_ thing in the array is finished:
-    const firstPizzaPromise = Promise.race([pizzaPromise1, pizzaPromise2, pizzaPromise3]);
+    // //Instead of Promise.all you can also use Promise.race to return a value once the _first_ thing in the array is finished:
+    // const firstPizzaPromise = Promise.race([pizzaPromise1, pizzaPromise2, pizzaPromise3]);
 
-    firstPizzaPromise.then(pizza => {
-      console.log('You must be hungry, here is the first one ready')
-      console.log(pizza);
+    // firstPizzaPromise.then(pizza => {
+    //   console.log('You must be hungry, here is the first one ready')
+    //   console.log(pizza);
+    // });
+
+    //USING .CATCH:
+    makePizza(['cheese', 'anchovies']) // "The .then will only run when the promise resolves successfully, and the .catch will only run when the promise does not resolve successfully."
+      .then(pizza => {
+        console.log(pizza);
+      }).catch(err => {
+        console.log('Oh no! this includes anchovies')
+        console.log(err);
+      }) // Yay!! this one correctly throws an error message (if the .catch is written) bc it includes anchovies and therefore the promise will be rejected. Once the .catch was written, we "catch" the error and get a corresponding message back. 
+
+      //Below: using .catch and an errorHandler function to handle the error:
+    function handleError(err) {
+      console.log('Oh no! this includes anchovies')
+      console.log(err);
+    }
+    
+    //   makePizza(['cheese', 'anchovies']).then(pizza => {
+    //   console.log(pizza);
+    // }).catch(handleError)
+
+    //Note if one of the promises in a promise daisy chain errors out, it will then bail out of the rest of the entire promise chain. That's good if you have 7-8 steps that are all dependent upon each other, but if you want the other promises to continue even if one of them is rejected then you should not use a promise daisy chain. You should explore using Promise.all or Promise.race or another promise static method.
+
+    const p1 = makePizza(['pepperoni']);
+    const p2 = makePizza(['anchovies']);
+    // Use new API called Promise.allSettled:
+    const dinnerPromise2 = Promise.allSettled([p1, p2]);
+
+    dinnerPromise2.then(results => {
+      console.log(results);
+      // function([pepPizza, achPizza]) { // << This is what I did instead of what Wes did above, but this just console logged [Object, object] for me and didn't let me see the objects themselves like his did.
+      // console.log(`Here are your allSettled results: ${pepPizza, achPizza}`);
+    // }
     });
+
 
   </script>
 </body>
