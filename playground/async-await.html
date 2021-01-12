@@ -1,3 +1,11 @@
+<!-- Lesson 70: Async Await 
+• SEE ALL THE WAYS YOU CAN DECLARE FUNCTIONS LISTED LINES 36-61.
+• Async awaits are great because "you can just stick in the wait()'s wherever you want, and that function will temporarily pause until that promise (the wait promise) has been resolved."
+• You cannot use await anywhere else except inside async functions. 
+• Any type of function can be marked with async. Essentially, whenever you have a function, just put the word async in front of it, and that will allow you to do awaiting inside it.
+• When we put the keyword "await" in front of a promise-based function, the bigger function that the promise is running inside of will temporarily pause until that promise is resolved. 
+• Cannot use "top level await" anywhere except in dev tools (i.e. in console in browser). "top level await" is using the keyword await in front of a promise-based function that is NOT inside of an async function. See lines 27-29 for an example.
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,6 +18,83 @@
 
 <body>
   <script>
+    function wait(ms = 0) {
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      })
+    }
+
+    function makePizza(toppings = []) {
+      return new Promise(function (resolve, reject) {
+        // reject if people try with pineapple
+        if (toppings.includes('pineapple')) {
+          reject('Seriously? Get out 🍍');
+        }
+        const amountOfTimeToBake = 500 + (toppings.length * 200);
+        // wait 1 second for the pizza to cook:
+        setTimeout(function () {
+          // when you are ready, you can resolve this promise
+          resolve(`Here is your pizza 🍕 with the toppings ${toppings.join(' ')}`);
+        }, amountOfTimeToBake);
+        // if something went wrong, we can reject this promise;
+      });
+    }
+
+    //BELOW: Lines 27-29 are an example of hypothetical "top-level" await. This use of "await" (i.e. outside of an async function) does not work _except_ inside of the console in the browser.
+    // console.log(wait)
+    // console.log('Running');
+    // await wait(3000);
+    // console.log('Ending');
+    // You can only use async await inside of a function that is marked as async. Async awaits are great, because "you can just stick in the wait()'s wherever you want, and that function will temporarily pause until that promise (the wait promise) has been resolved."
+    async function go() { // async tells your function, "Hey, I'm going to be doing some 'awaiting' inside of me." YOU CANNOT USE AWAIT ANYWHERE ELSE EXCEPT INSIDE ASYNC FUNCTIONS.
+      console.log('Starting');
+      await wait(2000); // We can put the keyword "await" in front of a promise-based function, and it will sort of temporarily pause that function (¿the bigger function that the promise function is inside of I think?) from running, until that promise is resolved. ¿It will pause which function from running? the go() function? or the wait() function? He must mean the go() function. However, await can only be used inside of functions marked async. So we have to add an "async" at the beginning of line 20 before `function go() {`.
+      console.log('Running');
+      await wait(3000);
+      console.log('Ending');
+    }
+
+    // go();
+
+    // BELOW: Pizzas being made one after another (i.e. NOT concurrently). The way this is currently written - Wes: "This could possibly be inefficient. This is what's referred to as a "footgun" in the industry, where, if you give somebody the tools to do this, it's possible that you could make code that is not performing. Meaning that, if I'm making a pepperoni and a mushroom pizza, I'm totally waiting for the pepperoni to be created, baked, and then taken out before I even start making the next pizza. And it's likely that you could make both of those at the same time; it's likely you could make pizza concurrently." So we'll try this a different way below...
+    async function makeDinner1() {
+      const pizza1 = await makePizza(['pepperoni']);
+      console.log(pizza1);
+      const pizza2 = await makePizza(['mushrooms']);
+      console.log(pizza2);
+    }
+
+
+    // BELOW: See 10m30s of video 70.
+    async function makeDinner2() {
+      const pizzaPromise1 = makePizza(['pepperoni']);
+      const pizzaPromise2 = makePizza(['mushrooms']);
+      const [pep, mush] = await Promise.all([pizzaPromise1, pizzaPromise2]); //make one big promise that we can await instead of each pizza individually. So lines 70 & 71 will each return a promise. IF YOU DON'T PUT AWAIT IN FRONT OF PROMISE.ALL, THEN this line will return a mama promise, with the value being an array of the values of those promises. TO RETURN THE VALUE OF THAT MAMA PROMISE ITSELF RATHER THAN THE PROMISE, MAKE SURE YOU USE THE AWAIT KEYWORD.
+      console.log(pep, mush)
+    }
+    
+    makeDinner2();
+
+    // //BELOW: LIST OF ALL FUNCTION TYPES: Async can be used on any function type.
+    // // Function declaration:
+    // async function fd() {}
+    // // Arrow function:
+    // const arrowFn = async () => {}
+    // // Callback functions:
+    // window.addEventListener('click', async function() {
+    // })
+    // // Methods:
+    // const person = {
+    //   // method:
+    //   sayHi: async function() {
+    //   },
+    //   // method shorthand: 
+    //   async sayHello() {
+    //   }, 
+    //   //function property
+    //   sayHey: async () => {
+    //   }
+    // }
 
   </script>
 </body>
