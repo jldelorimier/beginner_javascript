@@ -1,0 +1,169 @@
+<!-- I (JdL) created this document for video/lesson 69 "Refactoring Callback Hello to Promise Land". Here we will be refactoring the Callback Hell animation we made in video 66 and the event-loop.html file. 
+
+Wes: "Here we've taken this nested callback function and made it one level deep which is waiting, returning, waiting, returning, waiting, returning. And that's chaining multiple .then's onto each other. And that gets much better when we hit 'async await', but as for now, this is the best way we can refactor these promises is into a promise chain."-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Event Loop</title>
+  <link rel="stylesheet" href="../base.css">
+</head>
+
+<body>
+  <style>
+    .go {
+      margin: 5rem;
+      background: white;
+      padding: 5rem;
+      width: 25rem;
+      height: 25rem;
+      transition: all 0.2s;
+    }
+    .go.circle {
+      border-radius: 50%;
+    }
+    .go.red {
+      background: tomato;
+    }
+    .go.purple { 
+      background: purple;
+      color: white; /* This changes font color to white when background is purple. Why isn't this property called font-color? W3Schools just says the "color" property changes the text-color. I guess there's not a different property for font/text-color. */
+    }
+    .go.fadeout { 
+      opacity: 0;
+    }
+  </style>
+  <div class="go">Click me</div>
+  <script>
+    // BELOW: REFACTORED WITH PROMISES WITHOUT NOTES:
+    const wait = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms)); 
+
+    wait(1000).then(() => {
+      console.log("done!");
+    })
+
+    const go = document.querySelector('.go');
+
+    function animate(e) {
+      const el = e.currentTarget; 
+      //1. change the text to GO when clicked.
+      el.textContent = 'GO!'
+      //2. make it a circle after 2 seconds
+      wait(200)
+      .then(() => { 
+        el.classList.add('circle'); 
+        return wait(500); // If you put the return wait() line inside of the .then function, then we're not calling .then on a promise, we're calling it on nothing.... so then the next function doesn't run. We need to run the wait() function which creates the promise inside of the function that's already been triggered, so that there is a promise ready to have the .then applied to it. 
+      })
+      .then(() => {
+        //3. make it red after 0.5s
+        el.classList.add('red');
+        return wait(250);
+      })
+      .then(() => {
+        //4. make it sqaure after 0.25s
+        el.classList.remove('circle');
+        return wait(300);
+      })
+      .then(() => {
+        //5. make it purple after 0.3s
+        el.classList.remove('red');
+        el.classList.add('purple');
+        return wait(500);
+      })
+      .then(() => {
+        //6. fade out after 0.5s
+        el.classList.add('fadeout');
+      })
+    };
+
+    go.addEventListener('click', animate);
+
+
+    // BELOW: REFACTORED WITH PROMISES WITH MY NOTES:
+    // // First, let's write a function that simply waits a certain amount of time. Wes:"I do this with almost every project I have, because it's such a simple thing":
+    // const wait = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms)); // wait() function takes in the number of milliseconds you want to wait. We pass the setTimeout the resolve function itself and the number of seconds passed in to wait. Wes starts this out as a normal looking function with a function inside of it in video 69 "Refactoring Callback Hell to Promise Land" and totally refactors it into a one line function.
+
+    // wait(1000).then(() => {
+    //   console.log("done!");
+    // })
+
+    // const go = document.querySelector('.go');
+    
+    // function animate(e) {
+    //   const el = e.currentTarget; // .currentTarget is a an event property (¿i.e. like a method that can be run on an event?) that returns the object whose event listener triggered the event. In this case, this line assigns the div with class="go" to the variable "el" when that div is clicked on.
+    //   //1. change the text to GO when clicked.
+    //   el.textContent = 'GO!'
+    //   //2. make it a circle after 2 seconds
+    //   wait(200)
+    //   .then(() => { // Wes: "There's no piece of data that's resolved from the wait, it's just done. So we're not going to be passing any, like, response here. We just have an empty function, and after 2 seconds (or 200ms) we'll add a class of cirlce."
+    //   el.classList.add('circle'); // Just like our callback, the next function to be executed has to go inside of our current function. But what we can do is: from this .then, return another wait() of 500ms, and then we can chain another then onto it where we can put our third item in. ¿But why couldn't the wait(500) be inside then {} part of the following .then? Why is it in the circle's function?
+    //   return wait(500);
+    //   })
+    //   .then(() => {
+    //     //3. make it red after 0.5s
+    //     el.classList.add('red');
+    //     return wait(250);
+    //   })
+    //   .then(() => {
+    //     //4. make it sqaure after 0.25s
+    //     el.classList.remove('circle');
+    //     return wait(300);
+    //   })
+    //   .then(() => {
+    //     //5. make it purple after 0.3s
+    //     el.classList.remove('red');
+    //     el.classList.add('purple');
+    //     return wait(500);
+    //   })
+    //   .then(() => {
+    //     el.classList.add('fadeout');
+    //   })
+    //   //6. fade out after 0.5s
+    // };
+    
+    // go.addEventListener('click', animate);
+    
+    // BELOW: ORIGINAL CALLBACK HELL ANIMATION FUNCTION:
+  //   //1. change the text to GO when clicked.
+  //   go.addEventListener('clickXXX', function(e) {
+  //     const el = e.currentTarget; // .currentTarget is a an event property (¿i.e. like a method that can be run on an event?) that returns the object whose event listener triggered the event. In this case, this line assigns the div with class="go" to the variable "el" when that div is clicked on.
+  //     console.log(el);
+  //     el.textContent = 'GO!'
+  //     console.log(el.classList);
+  //     //2. make it a circle after 2 seconds
+  //     setTimeout(() => {
+  //       el.classList.add('circle');
+  //       console.log(el.classList);
+  //       //3. make it red afte3r 0.5s
+  //       setTimeout(() => { // This setTimeout() has to go INSIDE of the 'circle' setTimeout(); otherwise the 'red' class will be added before the 'circle' class because the 'circle' timeout finishes first (0.5s instead of 2 s).
+  //         el.classList.add('red'); 
+  //         console.log(el.classList);
+  //         //4. make it sqaure after 0.25s
+  //         setTimeout(() => {
+  //           el.classList.remove('circle');
+  //           console.log(el.classList);
+  //           //5. make it purple after 0.3s
+  //           setTimeout(() => {
+  //             el.classList.remove('red'); // I didn't include this line originally but Wes did. I guess this is good to keep our current classList clean.
+  //             console.log(el.classList);
+  //             el.classList.add('purple');
+  //             console.log(el.classList);
+  //             //6. fade out after 0.5s
+  //             setTimeout(() => {
+  //               el.classList.add('fadeout');
+  //               console.log(el.classList);
+  //             }, 500);
+  //           }, 300);
+  //         }, 250);
+  //       }, 500);
+  //     }, 2000);
+  //     console.log(el.classList);
+  //   });
+  // //7. finish!
+
+  </script>
+</body>
+
+</html>
