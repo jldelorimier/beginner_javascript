@@ -1,5 +1,7 @@
 <!-- I (JdL) created this document for video/lesson 69 "Refactoring Callback Hello to Promise Land". Here we will be refactoring the Callback Hell animation we made in video 66 and the event-loop.html file. 
 
+  We also revisit this file in Video 70 at 12m30s to refactor the animate() function we already refactored with promises to use async await.
+
 Wes: "Here we've taken this nested callback function and made it one level deep which is waiting, returning, waiting, returning, waiting, returning. And that's chaining multiple .then's onto each other. And that gets much better when we hit 'async await', but as for now, this is the best way we can refactor these promises is into a promise chain."-->
 <!DOCTYPE html>
 <html lang="en">
@@ -41,44 +43,69 @@ Wes: "Here we've taken this nested callback function and made it one level deep 
     const wait = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms)); 
 
     wait(1000).then(() => {
-      console.log("done!");
+      console.log("this version is done!");
     })
 
     const go = document.querySelector('.go');
 
-    function animate(e) {
+    // function animate(e) {
+    //   const el = e.currentTarget; 
+    //   //1. change the text to GO when clicked.
+    //   el.textContent = 'GO!'
+    //   //2. make it a circle after 2 seconds
+    //   wait(200)
+    //   .then(() => { 
+    //     el.classList.add('circle'); 
+    //     return wait(500); // If you put the return wait() line inside of the .then function, then we're not calling .then on a promise, we're calling it on nothing.... so then the next function doesn't run. We need to run the wait() function which creates the promise inside of the function that's already been triggered, so that there is a promise ready to have the .then applied to it. 
+    //   })
+    //   .then(() => {
+    //     //3. make it red after 0.5s
+    //     el.classList.add('red');
+    //     return wait(250);
+    //   })
+    //   .then(() => {
+    //     //4. make it sqaure after 0.25s
+    //     el.classList.remove('circle');
+    //     return wait(300);
+    //   })
+    //   .then(() => {
+    //     //5. make it purple after 0.3s
+    //     el.classList.remove('red');
+    //     el.classList.add('purple');
+    //     return wait(500);
+    //   })
+    //   .then(() => {
+    //     //6. fade out after 0.5s
+    //     el.classList.add('fadeout');
+    //   })
+    // };
+
+    //BELOW: Animate() function re-factored with async await's instead of .then's and callback functions, "We simply just pause the function from running with our 'await' in front of a function that returns to us a promise."
+    async function animate2(e) { // We're
       const el = e.currentTarget; 
       //1. change the text to GO when clicked.
       el.textContent = 'GO!'
       //2. make it a circle after 2 seconds
-      wait(200)
-      .then(() => { 
-        el.classList.add('circle'); 
-        return wait(500); // If you put the return wait() line inside of the .then function, then we're not calling .then on a promise, we're calling it on nothing.... so then the next function doesn't run. We need to run the wait() function which creates the promise inside of the function that's already been triggered, so that there is a promise ready to have the .then applied to it. 
-      })
-      .then(() => {
-        //3. make it red after 0.5s
-        el.classList.add('red');
-        return wait(250);
-      })
-      .then(() => {
-        //4. make it sqaure after 0.25s
-        el.classList.remove('circle');
-        return wait(300);
-      })
-      .then(() => {
-        //5. make it purple after 0.3s
-        el.classList.remove('red');
-        el.classList.add('purple');
-        return wait(500);
-      })
-      .then(() => {
-        //6. fade out after 0.5s
-        el.classList.add('fadeout');
-      })
+      await wait(2000) // If you miss using the await function, then I think what happens is, the code no longer pauses on this line for the wait() to be over before running the .add('circle') line. 
+      console.log('first wait for the circle is over')
+      el.classList.add('circle'); 
+      //3. make it red after 0.5s
+      await wait(500);
+      el.classList.add('red');
+      //4. make it sqaure after 0.25s
+      await wait(250);
+      el.classList.remove('circle');
+      //5. make it purple after 0.3s
+      await wait(300);
+      el.classList.remove('red');
+      el.classList.add('purple');
+      //6. fade out after 0.5s
+      await wait(500);
+      el.classList.add('fadeout');
     };
 
-    go.addEventListener('click', animate);
+    // go.addEventListener('click', animate); // this goes with the .then version of animate(), i.e. the first animate function we wrote.
+    go.addEventListener('click', animate2); // this goes with the async await version of the animate function, aka animate2()
 
 
     // BELOW: REFACTORED WITH PROMISES WITH MY NOTES:
