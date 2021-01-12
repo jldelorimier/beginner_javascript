@@ -81,7 +81,7 @@ Wes: "Here we've taken this nested callback function and made it one level deep 
     // };
 
     //BELOW: Animate() function re-factored with async await's instead of .then's and callback functions, "We simply just pause the function from running with our 'await' in front of a function that returns to us a promise."
-    async function animate2(e) { // We're
+    async function animate2(e) {
       const el = e.currentTarget; 
       //1. change the text to GO when clicked.
       el.textContent = 'GO!'
