@@ -1,3 +1,19 @@
+<!-- Video 74: Ajax and APIs (Ajax and Fetching data)
+• The other huge use case for working with async await and promises, is fetching data from what's called an API. 
+• API - Wes: "API is kind of a generic term that's thrown around, (application programming interface); Essentially what that is is some way that you can talk to a machine in somewhat of a standardized procedure. So if you're building any type of app (e.g. web app in JavaScript, iPhone app, Android app, etc.), that app, the client, (in our case the client will be the browser. It might be an iPhone app...) that needs to talk with the server that exists somewhere. E.g. if you have a Twitter app, you might need to pull down your most recent Tweets, you need to send Tweets, you need to be able to like Tweets, you need to be able to delete Tweets, and to reply to them... all of that functionality is based upon what is called an API. And most services that have sort of a public facing website will try to surface their data and surface their functionality via an API... As a web developer, a lot of what you're doing is just going to be pulling down data. There's the ability to push data to a server with APIs, but we're going to start with just looking at 'how can I go to some other service, and how can I pull that data into my application and then display it? Probably the most popular way to pull data from an existing website is, that first of all, they have to offer an API. If you want to be able to pull data from that website, then they have to offer what is called an API. An API is just a url that you can hit with some associated data (¿he means query parameters?) - like in this case I'm passing pizza (www.recipepuppy.com/api/?q=pizza), in this case I'm passing wes bos (api.github.com/users/wesbos) - and then that API will respond with what is called JSON."
+• ****FIND OUT WHICH OF WES' VIDEOS COVERS HOW TO PUSH DATA TO A SERVER WITH AN API****
+• JSON - Wes: "JSON (JavaScript Object Notation) is just a good way to transport JavaScript objects from server to server, or server to client. And because the way that works is, if you go to an API (Wes directs us to api.github.com/users/wesbos), this is the github API. (Wes recommends using JSON Viewer Chrome extension in your browser bc it will format ¿JSON objects? ¿An API? like this one nicely.)""
+• Once you're viewing an API (e.g. api.github.com/users/wesbos), Wes: "What comes back from that is not a JavaScript object. If you click on RAW in top right, it's actually just a string. If I take that string and put it into a variable....[it's still just a string]. So a server will just give you a string, and then it's up to you, the developer to turn it back into a JavaScript so that you can access the thing. So what we'll do is we'll wrap it in a JSON.parse(data)."
+• If we go into the console on an API (e.g. api.github.com/users/wesbos) and set the variable equal to that string: `const data = `{pasteTheStringFromTheApiHere}`, then that variable will still just be a string even though inside it looks like a JSON object, so in order to access the data inside of it we have to turn it back into an object: JSON.parse(data) will return the actually object we want. So we can store THAT in its own variable: `const dataObj = JSON.parse(data)`. Now we can access all of the properties/keys of the object (e.g. dataObj.company). 
+• Wes: "What's great about [being able to access data using JSON.parse() through an API] is, lots of APIs will allow you to pull the data from their server into your own. Though there are many that do not allow it, and there are many that require API keys, but right now we're working with what's called "wide open" APIs that don't require any authentication."
+• AJAX - (Asynchronous JavaScript And XML). Wes: "You'll often here what we're doing here [in this video] referred to as AJAX. AJAX (Asynchronous JavaScript And XML). XML is another way that you can receive data, and it looks a lot like HTML, but it's called XML. It's very unlikely you'll run into XML unless you work at a large bank that has not updated anything in the past.... So that's why it's called AJAX, but when people say AJAX, they mean fetching data from an API and displaying it on the page."
+• Endpoint - Wes: "'Endpoint' is a nice fancy word for the URL that you need to visit in order to get the data." It's nice to store your URL in its own variable (you can name it 'endpoint'), ¿I think because it's easier to reference? Doesn't matter if it's in backticks `` or double quotes "". 
+• fetch - Wes: "THEN, in order to get that data, we use a library - it's not even a library, it's part of JavaScript, and it's in the browser - it's called 'fetch'. There are some other libaries that are used, e.g. axios is good, but the fetch library is very very good, and it comes built into all browsers, which is great."
+• ****MAKE A LIST OF THE CODE THAT NEEDS TO BE WRITTEN WITH FETCH TO MAKE A GET REQUEST FROM AN API****
+• You can filter for just AJAX requests in Dev tools by selecting the XHR tag at the top inside the Network tab.
+• Wes: "Finding APIs is a bit of a tricky thing. Because a lot of them require API keys or they don't work cross-domain. But there's a good list called https://github.com/public-apis/public-apis ... so you can just build a little application that displays data based on your interests. So we're going to build a little recipe fetcher, just to show you how cors works and how you can get around cors issues sometimes and I think we'll learn a lot in that and we'll build a bunch more examples working with this ¿I think by 'this' he meant the public apis on github?, APIs. "
+ -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,8 +25,56 @@
 </head>
 
 <body>
+  <p class="user"></p>
   <script>
+    //BELOW: FIRST VERSION WITH NOTES
+    // function handleError(err) { // Wes: "Debugging APIs is hard, and if you don't have proper error handling set up, it's even harder.""
+    //   console.log("OH NO!");
+    //   console.log(err);
+    // }
+    // const endpoint = 'https://api.github.com/users/wesbos' // Wes likes to store the URL in a variable. Wes: "It's not necessary, but it's just much easier. And that's called an endpoint. "Endpoint" is a nice fancy word for the URL that you need to visit in order to get the data. THEN, in order to get that data, we use a library - it's not even a library, it's part of JavaScript, and it's in the browser - it's called 'fetch'. There are some other libaries that are used, e.g. axios is good, but the fetch library is very very good, and it comes built into all browsers, which is great."
+    // const userElement = document.querySelector('.user');
 
+    // userElement.textContent = "loading..."; // If you want, you can set the .textContent to "loading" while the API is still fetching the json response.
+    // const wesPromise = fetch(endpoint); // this will return a promise
+    // // console.log(wesPromise); // Now if you look in the console in your browser, you will see a promise returned. And if you go to the Network tab in your Dev tools and refresh it, this network tab will show you all of the requests that have happened on the page. So in this example, you'll see that we requested apis.html ¿Don't know where this one is coming from?, we requested some CSS (base.css), I requested some data (data:image/... this is that wavy background pattern), and then also I requested api.github.com ¿This must be the wesbos one? If you click on any of their names (e.g. wesbos), you will get a Preview of that data. "And you can see that it actually got sent out (see Headers tab), and then you can see that when it comes back, it comes back with all of the data (what's under the Preview tab). So we want to get that data back into JavaScript."
+
+    // //BELOW: This is a double promise: The first one gets the response, the second one takes the response and turns it into JSON for us.
+    // wesPromise.then(response => {
+    //   return response.json(); 
+    //   //console.log(response); // Now we don't get the promise anymore, we get this data, which is a response. Wes: "But this is a two part thing that needs to happen. We get a response (you can name that whatever you want, we called it response), and that comes streaming into the browser meaning it's not fully downloaded, and also, what has to happen at this point, is that it's not assumed that the data that is coming back is going to be JSON. Because you can use fetch to fetch any type of data. It might just be raw text that's coming from a page; it could be an image that you're trying to download from another page. There's all kinds of different use cases for the type of data that would be downloaded. So in our case we need to tell the browser, 'when this thing is done downloading, go ahead and convert it from JSON, to a JavaScript object. So what we do is, we take this response, and if we look at the prototype (go to the browser console and click on the dropdown for __proto__: Response) and you will see there is a number of methods on this response (e.g. arrayBuffer, clone, blob, formData, text, etc.). In our case, we're looking for the json method. So what we'll do is we'll simply return the response.json, which will return another promise."
+    // }).then(data => { // `response.json();` above will return a promise, so we need another .then (this line), and in that case we'll have the actual data. There's no need to use JSON.parse() here, because the response.json() does that for you. 
+    //   console.log(data);
+    //   console.log(data.blog); // So now we can also console log values of keys from that object like data.blog, etc.
+    //   console.log(data.name);
+    //   console.log(data.location);
+    //   userElement.textContent = `${data.name} - ${data.blog}`;
+    // }).catch(handleError);
+
+    //BELOW: Here, we're going to refactor what's above to use async await instead of .then()
+    const baseEndpoint = `https://api.github.com`;
+    const usersEndpoint = `${baseEndpoint}/users`;
+    const userElement = document.querySelector('.user');
+
+    async function displayUser(username) {
+      userElement.textContent = "loading...";
+      const response = await fetch(`${usersEndpoint}/${username}`); // Because we're using await now, fetch(endpoint) no longer returns a promise, but the response itself. This syntax will allow us to generate the endpoint on the fly based on what is passed into display(User).
+      const data = await response.json();
+      console.log(data);
+      console.log(data.blog);
+      console.log(data.name);
+      console.log(data.location);
+      userElement.textContent = `${data.name} - ${data.blog}`
+    }
+    
+    function handleError(err) {
+      console.log("OH NO!");
+      console.log(err);
+      userElement.textContent = `Something went wrong: ${err}`
+    }
+
+    displayUser('jldelorimier0').catch(handleError );
+    displayUser('wesbos').catch(handleError );
   </script>
 </body>
 
